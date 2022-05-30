@@ -1,0 +1,7 @@
+down
+left
+right
+shrink
+span
+tap
+up

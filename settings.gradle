@@ -1,0 +1,2 @@
+rootProject.name = "gesture_classification"
+include ':app'
