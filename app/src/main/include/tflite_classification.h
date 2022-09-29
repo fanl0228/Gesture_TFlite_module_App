@@ -10,8 +10,10 @@ extern "C" {
 #endif
 
 #define CLASSIFY_MODEL_PATH        "classification_model/mobilenet_v3.tflite"
-#define CLASSIFY_LABEL_MAP_PATH    "classification_model/gestrue_class_label.txt"
-#define MAX_CLASS_NUM  7
+#define CLASSIFY_LABEL_MAP_PATH    "classification_model/gestrue_class7_label.txt"
+#define MAX_CLASS_NUM  7+1
+
+#define ScoreThreshold 0.98
 
 typedef struct _classify_t
 {
@@ -34,7 +36,7 @@ typedef struct _classification_result_t
 bool tflite_feedData_interface(float *pBuffer);
 bool tflite_init_interface(AAssetManager *assetMgr);
 int  tflite_invoke_interface(classification_result_t *class_result);
-    
+
 #ifdef __cplusplus
 }
 #endif

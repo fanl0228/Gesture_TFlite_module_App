@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <math.h>
 
 static tflite_interpreter_t s_interpreter;
 static tflite_tensor_t      s_tensor_input;
@@ -143,7 +144,7 @@ int
 tflite_invoke_interface (classification_result_t *class_ret)
 {
     size_t topn = MAX_CLASS_NUM;
-
+    DBG_LOGI("tflite_invoke_interface>>>>>>>>>>>>>>>>>>>>>>");
     if (s_interpreter.interpreter->Invoke() != kTfLiteOk)
     {
         fprintf (stderr, "ERR: %s(%d)\n", __FILE__, __LINE__);
@@ -151,13 +152,55 @@ tflite_invoke_interface (classification_result_t *class_ret)
     }
 
     std::list<classify_t> classify_list;
-    for (int i = 0; i < MAX_CLASS_NUM; i ++)
+    for (int i = 0; i < MAX_CLASS_NUM-1; i ++)
     {
         classify_t item;
         item.id = i;
         item.score = get_scoreval(i);
         push_listitem (classify_list, item, topn);
     }
+
+    // softmax
+    // 求exp结果可能为 无穷大 inf
+    double expSum = 0;
+    // 求max(itr->score)
+    double maxScore = 0;
+    for (auto itr = classify_list.begin(); itr != classify_list.end(); itr ++) {
+        DBG_LOGI("modal output: %f", itr->score);
+        if(itr->score>maxScore) {
+            maxScore = itr->score;
+        }
+    }
+    // 解决溢出问题:  socre-max(score)
+    for (auto itr = classify_list.begin(); itr != classify_list.end(); itr ++) {
+        itr->score = itr->score - maxScore;
+    }
+    // exp求和
+    for (auto itr = classify_list.begin(); itr != classify_list.end(); itr ++) {
+        expSum += exp(itr->score);
+    }
+    DBG_LOGI("expSum: %f, max Score: %f", expSum, maxScore);
+    // 计算softmax
+    for (auto itr = classify_list.begin(); itr != classify_list.end(); itr ++) {
+        DBG_LOGI("itr->score: %f, exp(itr->score): %f,", itr->score, exp(itr->score));
+        itr->score = exp(itr->score)/expSum;
+    }
+
+    //Softmax Threshold
+    classify_t itemUnknown;
+    itemUnknown.id = MAX_CLASS_NUM-1; //unknown number
+
+    for (auto itr = classify_list.begin(); itr != classify_list.end(); itr ++) {
+        if(itr->score >= ScoreThreshold){
+            itemUnknown.score = 0.0; //unknown score
+            break;
+        }else{
+            itemUnknown.score = 1.0; //unknown score
+        }
+    }
+    push_listitem (classify_list, itemUnknown, topn);  //sort
+
+
     int count = 0;
     for (auto itr = classify_list.begin(); itr != classify_list.end(); itr ++)
     {
@@ -170,6 +213,7 @@ tflite_invoke_interface (classification_result_t *class_ret)
         count ++;
         class_ret->num = count;
     }
+    DBG_LOGI("tflite_invoke_interface<<<<<<<<<<<<<<<<<<<<");
     return 0;
 }
 
@@ -195,6 +239,32 @@ tflite_init_interface(AAssetManager *assetMgr)
     return ret;
 }
 
+void
+norm(float *data,int len){
+//    float mean;
+    float max;
+    float min;
+
+//    float sum=data[0];
+    max=data[0];
+    min=data[0];
+
+    for (int i = 1; i < len; i++)
+    {
+//        sum =data[i];
+        if(data[i]>max) max=data[i];
+        if(data[i]<min) min=data[i];
+    }
+//    mean=sum/len;
+
+    DBG_LOGI("input data max: %f, min: %f", max, min);
+
+    for(int i = 0; i< len; i++)
+    {
+        data[i] = data[i]/max;
+    }
+}
+
 bool
 tflite_feedData_interface(float *pBuffer)
 {
@@ -208,6 +278,9 @@ tflite_feedData_interface(float *pBuffer)
         buf = (float*) malloc(w * h * 1);
     buf = pBuffer;
 
+    // 2022/08/31 之前的模型不进行归一化操作
+    norm(buf, w*h);
+
     //Normalization
     float mean = 0.5f;
     float std  = 0.5f;
@@ -218,9 +291,9 @@ tflite_feedData_interface(float *pBuffer)
             *buf_fp32++ = (float)(*buf ++ - mean) / std;
         }
     }
-#if 1 /* for debug */
+#if 0 /* for debug */
     //可视化输入数据
-    for(int i =0; i < 10; i++)
+    for(int i =0; i < 5; i++)
     {
         DBG_LOGI("input data buf_fp32_vis: %f,", *buf_fp32_vis++);
     }

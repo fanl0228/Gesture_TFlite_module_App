@@ -10,8 +10,10 @@ extern "C" {
 #endif
 
 #define CLASSIFY_MODEL_PATH        "classification_model/mobilenet_v3.tflite"
-#define CLASSIFY_LABEL_MAP_PATH    "classification_model/gestrue_class_label.txt"
-#define MAX_CLASS_NUM  7
+#define CLASSIFY_LABEL_MAP_PATH    "classification_model/gestrue_class7_label.txt"
+#define MAX_CLASS_NUM  7+1
+
+#define ScoreThreshold 0.98
 
 typedef struct _classify_t
 {

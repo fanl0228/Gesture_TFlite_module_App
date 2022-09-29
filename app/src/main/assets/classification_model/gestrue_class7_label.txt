@@ -1,0 +1,8 @@
+tap
+up
+right
+left
+unknown
+unknpwn2
+down
+unknown1

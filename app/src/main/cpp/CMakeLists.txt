@@ -9,9 +9,10 @@ project(Gesture_Classify)
 #set(CMAKE_BUILD_TYPE debug) # release
 #set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
 
-# 开关，编译gesturetflite.so
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
-#ADD_SUBDIRECTORY(gesture_tflite)
+# 开关，是否编译gesturetflite.so
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
+ADD_SUBDIRECTORY(gesture_tflite)
+
 
 # now build app's shared lib
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall")

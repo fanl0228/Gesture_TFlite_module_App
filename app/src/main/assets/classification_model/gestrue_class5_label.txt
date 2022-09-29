@@ -1,0 +1,6 @@
+tap
+up
+right
+left
+down
+unknown
